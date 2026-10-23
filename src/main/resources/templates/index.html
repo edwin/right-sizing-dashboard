@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stress Test Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        :root {
+            color-scheme: dark;
+            --vscode-bg: #1e1e1e;
+            --vscode-sidebar-bg: #252526;
+            --vscode-input-bg: #3c3c3c;
+            --vscode-input-fg: #cccccc;
+            --vscode-button-bg: #0e639c;
+            --vscode-button-hover: #1177bb;
+            --vscode-border: #454545;
+            --vscode-fg: #d4d4d4;
+            --vscode-header-bg: #333333;
+            --vscode-accent: #007acc;
+        }
+
+        body {
+            background-color: var(--vscode-bg);
+            color: var(--vscode-fg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        main.container {
+            max-width: 800px;
+            width: 100%;
+            padding: 2rem;
+            background-color: var(--vscode-sidebar-bg);
+            border-left: 1px solid var(--vscode-border);
+            border-right: 1px solid var(--vscode-border);
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            color: var(--vscode-fg);
+            font-size: 1.5rem;
+            border-bottom: 1px solid var(--vscode-border);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            color: #858585;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        input, select {
+            background-color: var(--vscode-input-bg) !important;
+            border: 1px solid var(--vscode-border) !important;
+            color: var(--vscode-input-fg) !important;
+            padding: 0.5rem !important;
+            margin-bottom: 1rem !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* Remove number input spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--vscode-accent) !important;
+            box-shadow: none !important;
+        }
+
+        button[type="submit"] {
+            background-color: var(--vscode-button-bg);
+            border: none;
+            color: white;
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            background-color: var(--vscode-button-hover);
+        }
+
+        .grid {
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        article {
+            background-color: var(--vscode-bg) !important;
+            border: 1px solid var(--vscode-border) !important;
+            margin-top: 2rem;
+            padding: 1rem !important;
+            color: var(--vscode-fg);
+        }
+
+        article header {
+            background-color: var(--vscode-header-bg) !important;
+            border-bottom: 1px solid var(--vscode-border);
+            margin: -1rem -1rem 1rem -1rem;
+            padding: 0.5rem 1rem !important;
+            font-weight: bold;
+            color: var(--vscode-accent);
+        }
+
+        table {
+            font-size: 0.85rem;
+            background-color: transparent !important;
+        }
+
+        table th {
+            color: #858585;
+            border-bottom: 1px solid var(--vscode-border);
+            background-color: var(--vscode-header-bg) !important;
+        }
+
+        table td {
+            color: var(--vscode-fg);
+            border-bottom: 1px solid var(--vscode-border);
+            background-color: transparent !important;
+        }
+
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: block;
+        }
+        .htmx-request.htmx-indicator {
+            display: block;
+        }
+
+        [aria-busy="true"] {
+            color: var(--vscode-accent);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<main class="container">
+    <h1>Stress Test Dashboard</h1>
+    <form hx-post="/stress-test" hx-target="#results" hx-indicator="#loading">
+        <div class="grid">
+            <label for="appName">
+                Application Name
+                <input type="text" id="appName" name="appName" placeholder="My App" required>
+            </label>
+            <label for="url">
+                URL
+                <input type="url" id="url" name="url" placeholder="http://example.com" required>
+            </label>
+        </div>
+        <div class="grid">
+            <label for="method">
+                Method
+                <select id="method" name="method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+            </label>
+            <label for="userCount">
+                User Count
+                <input type="number" id="userCount" name="userCount" value="10" required>
+            </label>
+            <label for="spawnRate">
+                Spawn Rate
+            <input type="number" id="spawnRate" name="spawnRate" value="1" required>
+            </label>
+            <label for="duration">
+                Duration (seconds)
+                <input type="number" id="duration" name="duration" value="60" required>
+            </label>
+        </div>
+        <button type="submit">Submit Stress Test</button>
+    </form>
+
+    <div id="loading" class="htmx-indicator" style="margin-bottom: 1rem;">
+        <div aria-busy="true">Processing stress test, please wait...</div>
+    </div>
+
+    <div id="results">
+        <!-- Results will be loaded here -->
+    </div>
+</main>
+</body>
+</html>

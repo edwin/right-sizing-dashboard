@@ -1,5 +1,12 @@
 # Project guidelines
 
+## Goals
+This is a dashboard application, built with Quarkus. The goals are to trigger a stress test, monitor the result closely, and recommend the best configuration for the application.
+
+## Tools
+- Openshift Container Platform 4
+- Locust
+
 ## Stack
 - Java 21, Maven, Quarkus
 - JUnit 5 + AssertJ for tests

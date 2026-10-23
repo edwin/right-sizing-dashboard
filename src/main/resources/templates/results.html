@@ -1,0 +1,51 @@
+<article class="vscode-result">
+    <header>Locust Standard Result</header>
+    <div class="overflow-auto">
+        <table role="grid">
+        <thead>
+        <tr>
+            <th>Worker Count</th>
+            <th>User Count</th>
+            <th>Fail Ratio</th>
+            <th>Total RPS</th>
+            <th>Fail per Second</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{results.workerCount}</td>
+            <td>{results.userCount}</td>
+            <td>{results.failRatio}%</td>
+            <td>{results.totalRps}</td>
+            <td>{results.failPerSecond}</td>
+        </tr>
+        </tbody>
+        </table>
+    </div>
+</article>
+
+<article class="vscode-result">
+    <header>Detailed Result</header>
+    <div class="overflow-auto">
+        <table role="grid">
+        <thead>
+        <tr>
+            <th>Requests</th>
+            <th>Failures</th>
+            <th>Avg Response Time</th>
+            <th>p95</th>
+            <th>p99</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{results.requests}</td>
+            <td>{results.failures}</td>
+            <td>{results.avgResponseTime} ms</td>
+            <td>{results.p95} ms</td>
+            <td>{results.p99} ms</td>
+        </tr>
+        </tbody>
+        </table>
+    </div>
+</article>
