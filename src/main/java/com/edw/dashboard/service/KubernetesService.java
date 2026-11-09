@@ -37,7 +37,7 @@ public class KubernetesService {
                 .withName(deploymentName)
                 .get();
         if (dep == null) {
-            throw new NotFoundException("Deployment not found: " + deploymentName);
+            throw new NotFoundException("Deployment not found: " + deploymentName +" in namespace: " + namespace + "");
         }
 
         // Pods owned by this Deployment, via its selector (handles matchLabels + matchExpressions)

@@ -38,13 +38,13 @@ public class StressTestResource {
     public StressTestResource(Template index, Template results, @RestClient LocustClient locustClient,
                               KubernetesService kubernetesService,
                               @ConfigProperty(name = "stress-test.polling.interval", defaultValue = "30000") int pollingInterval,
-                              @ConfigProperty(name = "quarkus.kubernetes-client.namespace") Optional<String> namespace) {
+                              @ConfigProperty(name = "stress-test.kubernetes.namespace", defaultValue = "default") String namespace) {
         this.index = index;
         this.results = results;
         this.locustClient = locustClient;
         this.kubernetesService = kubernetesService;
         this.pollingInterval = pollingInterval;
-        this.namespace = namespace.orElse("default");
+        this.namespace = namespace;
     }
 
     @GET
@@ -110,11 +110,11 @@ public class StressTestResource {
         // Calculate recommendations
         // Request = resource + 30% buffer
         // Limit = Request + 50% buffer
-        BigDecimal cpuRequest = maxCpu.multiply(BigDecimal.valueOf(1.3)).setScale(3, RoundingMode.HALF_UP);
-        BigDecimal cpuLimit = cpuRequest.multiply(BigDecimal.valueOf(1.5)).setScale(3, RoundingMode.HALF_UP);
+        BigDecimal cpuRequest = maxCpu.multiply(BigDecimal.valueOf(1.2)).setScale(3, RoundingMode.HALF_UP);
+        BigDecimal cpuLimit = maxCpu.multiply(BigDecimal.valueOf(1.5)).setScale(3, RoundingMode.HALF_UP);
 
-        BigDecimal memRequest = maxMem.multiply(BigDecimal.valueOf(1.3)).setScale(0, RoundingMode.HALF_UP);
-        BigDecimal memLimit = memRequest.multiply(BigDecimal.valueOf(1.5)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal memRequest = maxMem.multiply(BigDecimal.valueOf(1.2)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal memLimit = maxMem.multiply(BigDecimal.valueOf(1.5)).setScale(0, RoundingMode.HALF_UP);
 
         LocustClient.StatsEntry statsTotal = currentStats.getEffectiveStatsTotal();
         StressTestResult result = new StressTestResult(
@@ -135,7 +135,7 @@ public class StressTestResource {
                 startTime,
                 stopTime,
                 maxCpu.doubleValue(),
-                maxMem.doubleValue(),
+                maxMem.divide(BigDecimal.valueOf(1024 * 1024), 2, RoundingMode.HALF_UP).doubleValue(),
                 cpuRequest.toPlainString() + " cores",
                 cpuLimit.toPlainString() + " cores",
                 memRequest.divide(BigDecimal.valueOf(1024 * 1024), 2, RoundingMode.HALF_UP).toPlainString() + " MiB",
