@@ -1,13 +1,17 @@
 package com.edw.dashboard;
 
 import com.edw.dashboard.client.LocustClient;
+import com.edw.dashboard.service.KubernetesService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
@@ -24,6 +28,9 @@ public class StressTestResourceTest {
     @InjectMock
     @RestClient
     LocustClient locustClient;
+
+    @InjectMock
+    KubernetesService kubernetesService;
 
     @org.junit.jupiter.api.BeforeEach
     public void setup() {
@@ -66,6 +73,8 @@ public class StressTestResourceTest {
         statsStopped.statsTotal.n99ResponseTime = 70.0;
 
         when(locustClient.getStats()).thenReturn(statsRunning, statsStopped);
+        when(kubernetesService.getUsage(anyString(), anyString()))
+                .thenReturn(new KubernetesService.Usage(1, BigDecimal.valueOf(0.1), BigDecimal.valueOf(1024 * 1024 * 100)));
 
         given()
           .formParam("appName", "TestApp")
@@ -81,6 +90,10 @@ public class StressTestResourceTest {
              .body(containsString("Start Time"))
              .body(containsString("Stop Time"))
              .body(containsString("Worker Count"))
-             .body(containsString("Total RPS"));
+             .body(containsString("Total RPS"))
+             .body(containsString("Resource Utilization & Recommendation"))
+             .body(containsString("Recommended Request"))
+             .body(containsString("CPU"))
+             .body(containsString("Memory"));
     }
 }

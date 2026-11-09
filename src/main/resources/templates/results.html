@@ -69,3 +69,33 @@
         </table>
     </div>
 </article>
+
+<article class="vscode-result">
+    <header>Resource Utilization & Recommendation</header>
+    <div class="overflow-auto">
+        <table role="grid">
+            <thead>
+            <tr>
+                <th>Type</th>
+                <th>Max Utilization</th>
+                <th>Recommended Request</th>
+                <th>Recommended Limit</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>CPU</td>
+                <td>{results.maxCpu} cores</td>
+                <td>{results.recommendedCpuRequest}</td>
+                <td>{results.recommendedCpuLimit}</td>
+            </tr>
+            <tr>
+                <td>Memory</td>
+                <td>{results.maxMemory} bytes</td>
+                <td>{results.recommendedMemoryRequest}</td>
+                <td>{results.recommendedMemoryLimit}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</article>

@@ -2,6 +2,7 @@ package com.edw.dashboard;
 
 import com.edw.dashboard.client.LocustClient;
 import com.edw.dashboard.model.StressTestResult;
+import com.edw.dashboard.service.KubernetesService;
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import jakarta.ws.rs.Consumes;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 @Path("/")
 public class StressTestResource {
@@ -29,14 +31,20 @@ public class StressTestResource {
     private final Template index;
     private final Template results;
     private final LocustClient locustClient;
+    private final KubernetesService kubernetesService;
     private final int pollingInterval;
+    private final String namespace;
 
     public StressTestResource(Template index, Template results, @RestClient LocustClient locustClient,
-                              @ConfigProperty(name = "stress-test.polling.interval", defaultValue = "30000") int pollingInterval) {
+                              KubernetesService kubernetesService,
+                              @ConfigProperty(name = "stress-test.polling.interval", defaultValue = "30000") int pollingInterval,
+                              @ConfigProperty(name = "quarkus.kubernetes-client.namespace") Optional<String> namespace) {
         this.index = index;
         this.results = results;
         this.locustClient = locustClient;
+        this.kubernetesService = kubernetesService;
         this.pollingInterval = pollingInterval;
+        this.namespace = namespace.orElse("default");
     }
 
     @GET
@@ -67,6 +75,8 @@ public class StressTestResource {
 
         // 2. Poll result
         LocustClient.LocustStats currentStats = null;
+        BigDecimal maxCpu = BigDecimal.ZERO;
+        BigDecimal maxMem = BigDecimal.ZERO;
 
         while (true) {
             if (duration > 0) {
@@ -76,6 +86,19 @@ public class StressTestResource {
             LocustClient.StatsEntry statsTotal = currentStats.getEffectiveStatsTotal();
             LOG.debug("Polling stats, current state: {}, current request count: {}", currentStats.state, statsTotal.numRequests);
 
+            try {
+                KubernetesService.Usage usage = kubernetesService.getUsage(namespace, appName);
+                if (usage.cpuCores().compareTo(maxCpu) > 0) {
+                    maxCpu = usage.cpuCores();
+                }
+                if (usage.memoryBytes().compareTo(maxMem) > 0) {
+                    maxMem = usage.memoryBytes();
+                }
+                LOG.debug("Current resource utilization for {}: CPU {} cores, Mem {} bytes", appName, usage.cpuCores(), usage.memoryBytes());
+            } catch (Exception e) {
+                LOG.error("Failed to get resource utilization for {}: {}", appName, e.getMessage());
+            }
+
             if ("stopped".equals(currentStats.state)) {
                 LOG.info("Load testing is done.");
                 break;
@@ -83,6 +106,15 @@ public class StressTestResource {
         }
 
         String stopTime = LocalDateTime.now().format(formatter);
+
+        // Calculate recommendations
+        // Request = resource + 30% buffer
+        // Limit = Request + 50% buffer
+        BigDecimal cpuRequest = maxCpu.multiply(BigDecimal.valueOf(1.3)).setScale(3, RoundingMode.HALF_UP);
+        BigDecimal cpuLimit = cpuRequest.multiply(BigDecimal.valueOf(1.5)).setScale(3, RoundingMode.HALF_UP);
+
+        BigDecimal memRequest = maxMem.multiply(BigDecimal.valueOf(1.3)).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal memLimit = memRequest.multiply(BigDecimal.valueOf(1.5)).setScale(0, RoundingMode.HALF_UP);
 
         LocustClient.StatsEntry statsTotal = currentStats.getEffectiveStatsTotal();
         StressTestResult result = new StressTestResult(
@@ -101,7 +133,13 @@ public class StressTestResource {
                 statsTotal.n95ResponseTime,
                 statsTotal.n99ResponseTime,
                 startTime,
-                stopTime
+                stopTime,
+                maxCpu.doubleValue(),
+                maxMem.doubleValue(),
+                cpuRequest.toPlainString() + " cores",
+                cpuLimit.toPlainString() + " cores",
+                memRequest.divide(BigDecimal.valueOf(1024 * 1024), 2, RoundingMode.HALF_UP).toPlainString() + " MiB",
+                memLimit.divide(BigDecimal.valueOf(1024 * 1024), 2, RoundingMode.HALF_UP).toPlainString() + " MiB"
         );
 
         return results.data("results", result);
