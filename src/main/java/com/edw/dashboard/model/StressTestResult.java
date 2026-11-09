@@ -1,4 +1,4 @@
-package com.edw.dashboard;
+package com.edw.dashboard.model;
 
 public class StressTestResult {
     private final int workerCount;
@@ -11,9 +11,12 @@ public class StressTestResult {
     private final double avgResponseTime;
     private final double p95;
     private final double p99;
+    private final String startTime;
+    private final String stopTime;
 
     public StressTestResult(int workerCount, int userCount, double failRatio, double totalRps, double failPerSecond, 
-                            long requests, long failures, double avgResponseTime, double p95, double p99) {
+                            long requests, long failures, double avgResponseTime, double p95, double p99,
+                            String startTime, String stopTime) {
         this.workerCount = workerCount;
         this.userCount = userCount;
         this.failRatio = failRatio;
@@ -24,6 +27,8 @@ public class StressTestResult {
         this.avgResponseTime = avgResponseTime;
         this.p95 = p95;
         this.p99 = p99;
+        this.startTime = startTime;
+        this.stopTime = stopTime;
     }
 
     public int getWorkerCount() { return workerCount; }
@@ -36,4 +41,6 @@ public class StressTestResult {
     public double getAvgResponseTime() { return avgResponseTime; }
     public double getP95() { return p95; }
     public double getP99() { return p99; }
+    public String getStartTime() { return startTime; }
+    public String getStopTime() { return stopTime; }
 }
