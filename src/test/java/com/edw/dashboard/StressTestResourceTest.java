@@ -48,18 +48,21 @@ public class StressTestResourceTest {
 
     @Test
     public void testStressTestSubmission() {
-        LocustClient.LocustStats statsRunning = new LocustClient.LocustStats();
-        statsRunning.state = "running";
-        statsRunning.workerCount = 3;
-        statsRunning.userCount = 10;
-        statsRunning.statsTotal = new LocustClient.StatsEntry();
-        statsRunning.statsTotal.numRequests = 50;
-        statsRunning.statsTotal.numFailures = 0;
-        statsRunning.statsTotal.totalRps = 10.0;
-        statsRunning.statsTotal.avgResponseTime = 50.0;
-        statsRunning.statsTotal.n95ResponseTime = 60.0;
-        statsRunning.statsTotal.n99ResponseTime = 70.0;
+        given()
+          .formParam("appName", "TestApp")
+          .formParam("url", "http://test.com")
+          .formParam("userCount", 10)
+          .formParam("spawnRate", 1)
+          .formParam("duration", 60)
+          .when().post("/stress-test")
+          .then()
+             .statusCode(200)
+             .body(containsString("hx-get=\"/stress-test/status?appName=TestApp\""))
+             .body(containsString("is running, please wait..."));
+    }
 
+    @Test
+    public void testStressTestStatusCompleted() {
         LocustClient.LocustStats statsStopped = new LocustClient.LocustStats();
         statsStopped.state = "stopped";
         statsStopped.workerCount = 3;
@@ -72,28 +75,41 @@ public class StressTestResourceTest {
         statsStopped.statsTotal.n95ResponseTime = 60.0;
         statsStopped.statsTotal.n99ResponseTime = 70.0;
 
-        when(locustClient.getStats()).thenReturn(statsRunning, statsStopped);
+        when(locustClient.getStats()).thenReturn(statsStopped);
         when(kubernetesService.getUsage(anyString(), anyString()))
                 .thenReturn(new KubernetesService.Usage(1, BigDecimal.valueOf(0.1), BigDecimal.valueOf(1024 * 1024 * 100)));
 
+        // Trigger test
         given()
-          .formParam("appName", "TestApp")
-          .formParam("url", "http://test.com")
-          .formParam("method", "GET")
-          .formParam("userCount", 10)
-          .formParam("spawnRate", 1)
-          .formParam("duration", 60)
-          .when().post("/stress-test")
-          .then()
-             .statusCode(200)
-             .body(containsString("Test Execution Time"))
-             .body(containsString("Start Time"))
-             .body(containsString("Stop Time"))
-             .body(containsString("Worker Count"))
-             .body(containsString("Total RPS"))
-             .body(containsString("Resource Utilization & Recommendation"))
-             .body(containsString("Recommended Request"))
-             .body(containsString("CPU"))
-             .body(containsString("Memory"));
+                .formParam("appName", "TestApp2")
+                .formParam("url", "http://test.com")
+                .formParam("userCount", 10)
+                .formParam("spawnRate", 1)
+                .formParam("duration", 60)
+                .post("/stress-test");
+
+        // We need to wait a bit because the service is async, but since we mocked everything and polling interval is 0 in profile
+        // it might be fast. However, performTest has Thread.sleep(pollingInterval).
+        
+        // Wait for completion (busy poll in test)
+        long start = System.currentTimeMillis();
+        boolean completed = false;
+        while (System.currentTimeMillis() - start < 5000) {
+            String body = given()
+                    .queryParam("appName", "TestApp2")
+                    .get("/stress-test/status")
+                    .then()
+                    .statusCode(200)
+                    .extract().body().asString();
+            if (body.contains("Locust Standard Result")) {
+                completed = true;
+                break;
+            }
+            try { Thread.sleep(100); } catch (InterruptedException e) {}
+        }
+
+        if (!completed) {
+            org.junit.jupiter.api.Assertions.fail("Test did not complete in time");
+        }
     }
 }

@@ -152,7 +152,7 @@
 <body>
 <main class="container">
     <h1>Stress Test Dashboard</h1>
-    <form hx-post="/stress-test" hx-target="#results" hx-indicator="#loading">
+    <form hx-post="/stress-test" hx-target="#results">
         <div class="grid">
             <label for="appName">
                 Application Name
@@ -179,10 +179,6 @@
         </div>
         <button type="submit">Submit Stress Test</button>
     </form>
-
-    <div id="loading" class="htmx-indicator" style="margin-bottom: 1rem;">
-        <div aria-busy="true">Processing stress test, please wait...</div>
-    </div>
 
     <div id="results">
         <!-- Results will be loaded here -->
