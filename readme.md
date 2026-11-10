@@ -90,3 +90,6 @@ docker run -p 8080:8080 right-sizing-dashboard
 - **Constructor Injection**: Strict use of constructor injection for dependency management.
 - **Logging**: SLF4J is used for all logging.
 - **Testing**: JUnit 5 and AssertJ for unit tests.
+
+## Screenshots
+![Dashboard](images/stress-test-dashboard.png)
